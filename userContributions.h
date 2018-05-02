@@ -37,7 +37,7 @@ multimap<int,tm> issueInterpret( string searchResult, tm curr );
 tm getCurrentTime();
 string dateFromyday(int yday);
 
-void printContributions(userContributionHistory * thisUser);
+void printContributions(userContributionHistory * thisUser, int * commitArray);
 
 //fetch and add data to new user
 void addCommits(userContributionHistory * thisUser){
@@ -201,20 +201,25 @@ tm getCurrentTime(){
 }
 
 //print contribution data from 365 days ago to current day
-void printContributions(userContributionHistory * thisUser){
+void printContributions(userContributionHistory * thisUser, int * commitArray){
     tm dCurr = getCurrentTime(); tm searchDate = dCurr;
     cout << "Contributions for " << thisUser->getUsername() << ", by date" << endl;
     
     //set to 365 days ago
     searchDate.tm_year--;
-    for (searchDate.tm_yday++; searchDate.tm_yday <= 365; searchDate.tm_yday++){
+    int i = 0;
+    for (searchDate.tm_yday++; searchDate.tm_yday <= 365; searchDate.tm_yday++, i++){
         string dateUTC = dateFromyday(searchDate.tm_yday);
-        cout << dateUTC << "/" << searchDate.tm_year + 1900 << ": " << thisUser->getTotalCount(searchDate) << endl;
+        int c = thisUser->getTotalCount(searchDate);
+        commitArray[i] = c;
+        cout << dateUTC << "/" << searchDate.tm_year + 1900 << ": " << c << endl;
     }
     //print this year's contributions
     searchDate.tm_year++;
-    for (searchDate.tm_yday = 0; searchDate.tm_yday<=dCurr.tm_yday; searchDate.tm_yday++){
+    for (searchDate.tm_yday = 0; searchDate.tm_yday<=dCurr.tm_yday; searchDate.tm_yday++, i++){
         string dateUTC = dateFromyday(searchDate.tm_yday);
+        int c = thisUser->getTotalCount(searchDate);
+        commitArray[i] = c;
         cout << dateUTC << "/" << searchDate.tm_year + 1900 <<  ": " << thisUser->getTotalCount(searchDate) << endl;
     }
 }

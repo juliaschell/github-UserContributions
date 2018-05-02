@@ -25,8 +25,9 @@ int main(){
     addCommits(&thisUser);
     addIssues(&thisUser);
     
-    printContributions(&thisUser);
-    
+    int contributionArray[366];
+    printContributions(&thisUser, contributionArray);
+    cout << "all done!" << endl;
 }
 
 
