@@ -38,6 +38,7 @@ public:
     int getTotalCount(tm date){
         return getCommitCount(date)+getIssuesCount(date);}
     
+    string getDateUTC(int yday);
     /*
      void displayPastWeek();
      void displayMonth(int month);
@@ -66,5 +67,20 @@ bool userContributionHistory::update(int actionType, string jsonGET){
             return false;
     }
 }
+
+/*
+string userContributionHistory::getDateUTC(int yday){
+    tm d;
+    if (commits.find(yday)!=commits.end())
+        d = commits.find(yday)->second;
+    else if (issues.find(yday)!=issues.end())
+        d = issues.find(yday)->second;
+    else{
+        return "";}
+    
+    string MM = to_string(d.tm_mon+1); string DD = to_string(d.tm_mday);
+    string dateUTC = to_string(d.tm_mon+1) + "/" + to_string(d.tm_mday);
+    return dateUTC;
+}*/
 
 #endif /* contributionClass_h */

@@ -35,6 +35,7 @@ multimap<int,tm> commitInterpret( string searchResult, tm curr );
 multimap<int,tm> issueInterpret( string searchResult, tm curr );
 
 tm getCurrentTime();
+string dateFromyday(int yday);
 
 void printContributions(userContributionHistory * thisUser);
 
@@ -47,7 +48,7 @@ void addCommits(userContributionHistory * thisUser){
     if (commitSearchString.empty()){
         cout << "Error: get commit search results" << endl;
     }
-    thisUser->update(0,username);
+    thisUser->update(0,commitSearchString);
 }
 
 void addIssues(userContributionHistory * thisUser){
@@ -58,7 +59,7 @@ void addIssues(userContributionHistory * thisUser){
         cout << "Error: get commit search results" << endl;
     }
     
-    thisUser->update(0,username);
+    thisUser->update(1,issueSearchString);
 }
 
 //for GET search
@@ -128,13 +129,14 @@ multimap<int,tm> commitInterpret( string searchResult, tm curr ){
         //parse UTC YYYY-MM-DD format
         int y = stoi(returnedDate.substr(0,4)); int m = stoi(returnedDate.substr(5,2)); int d = stoi(returnedDate.substr(8,2));
         //make tm object to compare to current date
-        struct tm * date; date->tm_year = y-1990; date->tm_mon = m-1; date->tm_mday = d;
-        mktime(date);
+        struct tm date;
+        date.tm_year = y-1900; date.tm_mon = m-1; date.tm_mday = d;
+        mktime(&date);
         //ignore if over a year old
-        if (curr.tm_yday>=date->tm_yday & curr.tm_year>date->tm_year)
-            continue;
+        //if (curr.tm_yday>=date->tm_yday & curr.tm_year>date->tm_year)
+           // continue;
         //otherwise (within a year) add to map
-        commitCount.insert(pair<int,tm>(date->tm_yday,*date));
+        commitCount.insert(pair<int,tm>(date.tm_yday, date));
         
         //insert message
         /*string comment = data["items"][i]["commit"]["message"].asString();
@@ -173,13 +175,14 @@ multimap<int,tm> issueInterpret( string searchResult, tm curr ){
     for (int i = 0; i < numItems; i++){
         string returnedDate = data["items"][i]["created_at"].asString();
         int y = stoi(returnedDate.substr(0,4)); int m = stoi(returnedDate.substr(5,2)); int d = stoi(returnedDate.substr(8,2));
-        struct tm * date; date->tm_year = y-1990; date->tm_mon = m-1; date->tm_mday = d;
-        mktime(date);
+        struct tm date;
+        date.tm_year = y-1900; date.tm_mon = m-1; date.tm_mday = d;
+        mktime(&date);
         
-        if (curr.tm_yday>=date->tm_yday & curr.tm_year>date->tm_year)
-            continue;
+        //if (curr.tm_yday>=date.tm_yday & curr.tm_year!=date.tm_year)
+            //continue;
         
-        issueCount.insert(pair<int,tm>(date->tm_yday,*date));
+        issueCount.insert(pair<int,tm>(date.tm_yday,date));
         
         //add title info to map
         /*string title = data["items"][i]["title"].asString();
@@ -200,15 +203,30 @@ tm getCurrentTime(){
 //print contribution data from 365 days ago to current day
 void printContributions(userContributionHistory * thisUser){
     tm dCurr = getCurrentTime(); tm searchDate = dCurr;
-    //print this years contributions
-    for (searchDate.tm_yday = dCurr.tm_yday-1; searchDate.tm_yday >= 0; searchDate.tm_yday--){
-        thisUser->getTotalCount(searchDate);
-    }
-    //print last years contributions
+    cout << "Contributions for " << thisUser->getUsername() << ", by date" << endl;
+    
+    //set to 365 days ago
     searchDate.tm_year--;
-    for (searchDate.tm_yday = 365; searchDate.tm_yday>=dCurr.tm_yday; searchDate.tm_yday--){
-        thisUser->getTotalCount(searchDate);
+    for (searchDate.tm_yday++; searchDate.tm_yday <= 365; searchDate.tm_yday++){
+        string dateUTC = dateFromyday(searchDate.tm_yday);
+        cout << dateUTC << "/" << searchDate.tm_year + 1900 << ": " << thisUser->getTotalCount(searchDate) << endl;
     }
+    //print this year's contributions
+    searchDate.tm_year++;
+    for (searchDate.tm_yday = 0; searchDate.tm_yday<=dCurr.tm_yday; searchDate.tm_yday++){
+        string dateUTC = dateFromyday(searchDate.tm_yday);
+        cout << dateUTC << "/" << searchDate.tm_year + 1900 <<  ": " << thisUser->getTotalCount(searchDate) << endl;
+    }
+}
+
+
+string dateFromyday(int yday){
+    tm t = getCurrentTime();
+    t.tm_mday = 1;
+    t.tm_mon = 0;
+    time_t day = mktime(&t) + (yday - 1) * 86400;
+    gmtime_r(&day, &t);
+    return to_string(t.tm_mon+1) + "/" + to_string(t.tm_mday);
 }
 
 #endif
